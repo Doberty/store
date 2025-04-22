@@ -12,22 +12,19 @@ import { addToLikedProducts, removeFromLikedProducts, recordInteraction, getReco
 import ProductDetailDialog from "./product-detail-dialog"
 import { Badge } from "../components/ui/badge"
 import { Skeleton } from "../components/ui/skeleton"
-import BrandFilterDialog from "./brand-filter-dialog"
 
 interface ProductDiscoveryProps {
   initialProducts: Product[]
 }
 
 export default function ProductDiscovery({ initialProducts }: ProductDiscoveryProps) {
-  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [products] = useState<Product[]>(initialProducts)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [direction, setDirection] = useState<"left" | "right" | null>(null)
   const [showDetail, setShowDetail] = useState(false)
-  const [showBrandFilter, setShowBrandFilter] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const cardRef = useRef<HTMLDivElement>(null)
   const { addItem } = useCart()
 
@@ -44,15 +41,6 @@ export default function ProductDiscovery({ initialProducts }: ProductDiscoveryPr
         try {
           const recommendations = await getRecommendations()
           if (recommendations.length > 0) {
-            // Filter by selected brands if any
-            const filteredRecommendations =
-              selectedBrands.length > 0
-                ? recommendations.filter((p: Product) => selectedBrands.includes(p.brand))
-                : recommendations
-
-            if (filteredRecommendations.length > 0) {
-              setProducts((prev) => [...prev, ...filteredRecommendations])
-            }
           }
         } catch (error) {
           console.error("Failed to fetch recommendations:", error)
@@ -63,7 +51,7 @@ export default function ProductDiscovery({ initialProducts }: ProductDiscoveryPr
     }
 
     fetchRecommendations()
-  }, [currentIndex, products.length, selectedBrands])
+  }, [currentIndex, products.length])
 
   // Record view when product changes
   useEffect(() => {
@@ -177,20 +165,6 @@ export default function ProductDiscovery({ initialProducts }: ProductDiscoveryPr
     }
   }
 
-  const handleBrandFilterChange = (brands: string[]) => {
-    setSelectedBrands(brands)
-
-    // If we have selected brands, filter the products
-    if (brands.length > 0) {
-      const filteredProducts = initialProducts.filter((p) => brands.includes(p.brand))
-      setProducts(filteredProducts)
-      setCurrentIndex(0)
-    } else {
-      // Reset to initial products
-      setProducts(initialProducts)
-      setCurrentIndex(0)
-    }
-  }
 
   const cardStyle = {
     transform: dragStart
@@ -292,12 +266,6 @@ export default function ProductDiscovery({ initialProducts }: ProductDiscoveryPr
       </div>
 
       <ProductDetailDialog product={currentProduct} open={showDetail} onOpenChange={setShowDetail} />
-      <BrandFilterDialog
-        open={showBrandFilter}
-        onOpenChange={setShowBrandFilter}
-        selectedBrands={selectedBrands}
-        onBrandsChange={handleBrandFilterChange}
-      />
     </>
   )
 }
